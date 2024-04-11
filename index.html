@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airline Ticket Reservation Systemzzz</title>
+<style>
+body{
+border:none;
+margin: 0px;
+padding: 0px;
+}
+.body::after{
+    content:'';
+    position: absolute;
+    z-index:-1;
+    inset:0;
+    background-image: url(background.jpeg);
+    background-size: cover;
+    background-position: center;
+    opacity:0.6;
+    
+}
+.nav{
+display: flex;
+background-color: black;
+color: white;
+}
+#logs{
+height:80px;
+width:80px;
+margin-left: 30px;
+border:2px;
+border-radius:50%;
+border-color:white;
+}
+h3{
+margin-left: 410px;
+}
+.container
+{
+max-width: 600px;
+margin: 0 auto;
+padding: 20px;
+}
+form
+{
+margin-bottom: 20px;
+}
+label
+{
+display: block;
+margin-bottom: 5px;
+}
+input, button
+{
+margin-bottom: 10px;
+}
+button
+{
+padding: 5px 10px;
+}
+#flightsList
+{
+margin-bottom: 20px;
+}
+#seats
+{
+display: flex;
+flex-wrap: wrap;
+}
+.seat
+{
+width: 30px;
+height: 30px;
+margin: 5px;
+background-color: lightgray;
+cursor: pointer;
+}
+.seat.selected
+{
+background-color: green;
+}
+#message
+{
+margin-top: 20px;
+padding: 10px;
+border: 1px solid white;
+}
+</style>
+</head>
+<body>
+<div class="nav">
+<img src="airplane image.jpg" id="logs" alt="airplane">
+<h3>Welcome to our online booking portal</h3>
+</div>
+<div class="container">
+<h1>Airline Ticket Reservation System</h1>
+<form id="searchForm">
+<label for="origin">Origin:</label>
+<input type="text" id="origin" required>
+<label for="destination">Destination:</label>
+<input type="text" id="destination" required>
+<label for="date">Date:</label>
+<input type="date" id="date" required>
+<label for="passengers">Passengers:</label>
+<input type="number" id="passengers" min="1" required>
+<button type="submit">Search Flights</button>
+</form>
+<div id="flightsList"></div>
+<div id="seatMap" style="display: none;">
+<h2>Seat Map</h2>
+<div id="seats"></div>
+<button id="confirmBooking">Confirm Booking</button>
+</div>
+<div id="bookingForm" style="display: none;">
+<h2>Booking Details</h2>
+<form id="personalDetailsForm">
+<label for="fullName">Full Name:</label>
+<input type="text" id="fullName" required>
+<label for="email">Email:</label>
+<input type="email" id="email" required>
+<label for="cardNumber">Card Number:</label>
+<input type="text" id="cardNumber" required>
+<button type="submit">Submit Booking</button>
+</form>
+<div id="totalFare"></div>
+</div>
+<div id="message" style="display: none;"></div>
+</div>
+
+<script>
+const flights = [
+{ id: 1, number: "6E22374", departure: "10:00 AM", arrival: "12:00 PM", price: 6300 },
+{ id: 2, number: "6E22345", departure: "01:00 PM", arrival: "03:00 PM", price: 5300 }
+];
+const seatMap = [
+[1, 1, 0, 0, 0, 0],
+[0, 1, 1, 0, 0, 0],
+[0, 1, 1, 1, 0, 0],
+[0, 0, 1, 1, 1, 0],
+[0, 0, 0, 1, 1, 1]
+];
+let selectedFlight = null;
+let selectedSeats = [];
+const searchForm = document.getElementById('searchForm');
+const flightsList = document.getElementById('flightsList');
+const seatMapDiv = document.getElementById('seatMap');
+const seatsDiv = document.getElementById('seats');
+const bookingFormDiv = document.getElementById('bookingForm');
+const messageDiv = document.getElementById('message');
+searchForm.addEventListener('submit', function(event) {
+event.preventDefault();
+const origin = document.getElementById('origin').value;
+const destination = document.getElementById('destination').value;
+const date = document.getElementById('date').value;
+const passengers = parseInt(document.getElementById('passengers').value);
+displayFlights(flights);
+});
+function displayFlights(flights) {
+flightsList.innerHTML = '';
+flights.forEach(flight => {
+const flightDiv = document.createElement('div');
+flightDiv.innerHTML = `
+<p>Flight Number: ${flight.number}</p>
+<p>Departure: ${flight.departure}</p>
+<p>Arrival: ${flight.arrival}</p>
+<p>Price: Rs${flight.price}</p>
+<button class="selectFlight" data-flight-id="${flight.id}">Select Flight</button>
+`;
+flightsList.appendChild(flightDiv);
+});
+}
+flightsList.addEventListener('click', function(event) {
+if (event.target.classList.contains('selectFlight')) {
+const flightId = parseInt(event.target.dataset.flightId);
+selectedFlight = flights.find(flight => flight.id === flightId);
+displaySeatMap();
+}
+});
+function displaySeatMap() {
+seatsDiv.innerHTML = '';
+seatMapDiv.style.display = 'block';
+for (let i = 0; i < seatMap.length; i++) {
+for (let j = 0; j < seatMap[i].length; j++) {
+const seat = document.createElement('div');
+seat.classList.add('seat');
+seat.textContent = `${i+1}${String.fromCharCode(65 + j)}`;
+if (seatMap[i][j] === 1) {
+seat.classList.add('occupied');
+} else {
+seat.addEventListener('click', selectSeat);
+}
+seatsDiv.appendChild(seat);
+}
+}
+}
+function selectSeat(event) {
+const selectedSeat = event.target.textContent;
+if (selectedSeats.includes(selectedSeat)) {
+const index = selectedSeats.indexOf(selectedSeat);
+selectedSeats.splice(index, 1);
+event.target.classList.remove('selected');
+} else {
+selectedSeats.push(selectedSeat);
+event.target.classList.add('selected');
+}
+}
+confirmBooking.addEventListener('click', function() {
+bookingFormDiv.style.display = 'block';
+const totalFare = selectedSeats.length * selectedFlight.price;
+document.getElementById('totalFare').textContent = `Total Fare: Rs${totalFare}`;
+});
+personalDetailsForm.addEventListener('submit', function(event) {
+event.preventDefault();
+const fullName = document.getElementById('fullName').value;
+const email = document.getElementById('email').value;
+const cardNumber = document.getElementById('cardNumber').value;
+const bookingDetails = {
+fullName,
+email,
+cardNumber,
+flight: selectedFlight,
+seats: selectedSeats
+};
+localStorage.setItem('bookingDetails', JSON.stringify(bookingDetails));
+messageDiv.textContent = 'Booking successful!';
+messageDiv.style.display = 'block';
+setTimeout(() => {
+localStorage.removeItem('bookingDetails');
+messageDiv.style.display = 'none';
+bookingFormDiv.style.display = 'none';
+seatMapDiv.style.display = 'none';
+selectedFlight = null;
+selectedSeats = [];
+}, 5000);
+});
+</script>
+</body>
+</html>
